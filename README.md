@@ -15,6 +15,7 @@ It requires few properies:
 
 * **nextSelector** : selector of anchor with next page link;
 * **paginationSelector** : selector of container that have pagination anchors;
+* **scrollContainerSelector** : selector of scrolling area container (div, popover, etc..etc..);
 * **extraQueryParameters** : parameters to append to url from next page link;
 * **activateOnStart** : (default: true) set if plugin should be activated at start; 
 
