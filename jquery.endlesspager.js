@@ -1,9 +1,9 @@
-// --------------------
+// -----------------------
 // jQuery Endless Pager
 // by Fabrizio Caldarelli
 // version - 1.0 
-// Last update - 07/01/2015
-// --------------------
+// Last update - 08/01/2015
+// ------------------------
 ;(function($) {
 	'use strict';
 
@@ -13,9 +13,11 @@
 
 		nextSelector : '.pagination li.next a',
 		paginationSelector : '.pagination',
+		scrollContainerSelector : null,
 		updatingInfiniteScroll : false,
 		extraQueryParameters : null,
 		activateOnStart : true,
+		debug : false,
 		
         loading: {
             //finishedMsgTemplate: "<em>Congratulations, you've reached the end of the internet.</em>",
@@ -33,6 +35,7 @@
 		// the plugin's final properties are the merged default and
 		// user-provided options (if any)
 		this.settings = $.extend({}, defaults, options);
+		this.VERSION = '1.0';
 		this.element = element;
 		this.$element = $(element);
 		this.cssClassActive = 'endlesspager-active';
@@ -46,6 +49,86 @@
 	// Prototypes
 	Endlesspager.prototype = {
 		// Private methods
+		_debug : function(msg)
+		{
+			if(this.settings.debug)
+			{
+				console.log('ENDLESS PAGER - '+msg);
+			}
+		},
+		
+		_checkScrollingUpdateRequired : function() {
+			var $element = this.$element;
+	    	var self = this;
+	    	var scrollContainer = (self.settings.scrollContainerSelector!=null)?$(self.settings.scrollContainerSelector):$(window);
+			
+        	var containerScrollTop = scrollContainer.scrollTop();
+        	var documentHeight = (self.settings.scrollContainerSelector!=null)?self.$element.height():$(document).height();
+        	var containerHeight = scrollContainer.height();
+
+            self._debug('containerScrollTop ('+ containerScrollTop + ') >= docHeight('+documentHeight+') - containerHeight('+ containerHeight + ') - 150');	
+        	
+            //if ($(window).scrollTop() >= ($(document).height() - $(window).height() - 150)) {
+           	if(containerScrollTop >= (documentHeight-containerHeight-150)) {
+                //Add something at the end of the page
+                self._debug('scroll');
+                self._debug('element = ');
+                self._debug($element);
+                self._debug('hasClass endlesspager-active = '+$element.hasClass(self.cssClassActive));
+                if($element.hasClass('endlesspager-active') == false) {
+                	self.settings.updatingInfiniteScroll = false;
+                	return;
+                };
+                
+                if(self.settings.updatingInfiniteScroll == false)
+                {
+                    self.settings.updatingInfiniteScroll = true;
+                    
+                    self._debug('nextSelector');
+                    self._debug(self.settings.nextSelector);
+                    var href = $(self.settings.nextSelector).attr('href');
+                    self._debug('href = '+href);
+                    if(href != null)
+                    {
+                    	if(self.settings.extraQueryParameters!=null)
+                    	{
+                    		href += ('&'+self.settings.extraQueryParameters);
+                    	}
+	                    self._debug('def href = '+href);
+	                    	
+                        var ajaxLoader = $(self.settings.loading.msgTemplate);
+                        $element.append(ajaxLoader);
+                        
+                        $.get(
+                            href,
+                            function(data)
+                            {
+                                var elementId = $element.attr('id');
+                                var content = $(data).find('#'+elementId);
+                                var paginationContent = $(data).find(self.settings.paginationSelector);
+                                
+                                self._debug('href = '+href);
+                                self._debug('lstid = '+elementId);
+                                self._debug('content = '+content);
+                                self._debug('paginationContent = '+paginationContent.html());
+                                
+                                $(ajaxLoader).remove();
+                                $element.append(content);
+                                $(self.settings.paginationSelector).html(paginationContent);
+                                
+                                self.settings.updatingInfiniteScroll = false;
+                            }
+                        )
+
+                    }
+                    else
+                    {
+                        self.settings.updatingInfiniteScroll = false
+                    }
+    
+                }
+            }
+		},
 		
 		// initialization method
 		_init : function() {
@@ -61,8 +144,12 @@
 
 		    var scrollListener = function () {
 		    	
+		    	self._debug('scrollListener');
 		    	
-		        $(window).on("scroll", function () { 
+		    	var scrollContainer = (self.settings.scrollContainerSelector!=null)?$(self.settings.scrollContainerSelector):$(window);
+		    	
+		        $(scrollContainer).on("scroll", function () { 
+		        	self._debug('scrollContainer - scroll');
 	                if(
 	                	($element.hasClass(self.cssClassActive) == false)
 	                	||
@@ -70,72 +157,15 @@
 	                ) 
 	                {
 	                	return;
-	                };		        	
-		        	
-		            if ($(window).scrollTop() >= ($(document).height() - $(window).height() - 150)) {
-		                //Add something at the end of the page
-		                console.log('scroll');
-		                console.log('element = ');
-		                console.log($element);
-		                console.log('hasClass endlesspager-active = '+$element.hasClass(self.cssClassActive));
-		                if($element.hasClass('endlesspager-active') == false) {
-		                	self.settings.updatingInfiniteScroll = false;
-		                	return;
-		                };
-		                
-		                if(self.settings.updatingInfiniteScroll == false)
-		                {
-		                    self.settings.updatingInfiniteScroll = true;
-		                    
-		                    console.log('nextSelector');
-		                    console.log(self.settings.nextSelector);
-		                    var href = $(self.settings.nextSelector).attr('href');
-		                    console.log('href = '+href);
-		                    if(href != null)
-		                    {
-		                    	if(self.settings.extraQueryParameters!=null)
-		                    	{
-		                    		href += ('&'+self.settings.extraQueryParameters);
-		                    	}
-			                    console.log('def href = '+href);
-			                    	
-		                        var ajaxLoader = $(self.settings.loading.msgTemplate);
-		                        $element.append(ajaxLoader);
-		                        
-		                        $.get(
-		                            href,
-		                            function(data)
-		                            {
-		                                var elementId = $element.attr('id');
-		                                var content = $(data).find('#'+elementId);
-		                                var paginationContent = $(data).find(self.settings.paginationSelector);
-		                                
-		                                console.log('href = '+href);
-		                                console.log('lstid = '+elementId);
-		                                console.log('content = '+content);
-		                                console.log('paginationContent = '+paginationContent.html());
-		                                
-		                                $(ajaxLoader).remove();
-		                                $element.append(content);
-		                                $(self.settings.paginationSelector).html(paginationContent);
-		                                
-		                                self.settings.updatingInfiniteScroll = false;
-		                            }
-		                        )
-		
-		                    }
-		                    else
-		                    {
-		                        self.settings.updatingInfiniteScroll = false
-		                    }
-		    
-		                }
-		            }
+	                };		        
+
+					self._checkScrollingUpdateRequired();		        	
 		            //setTimeout(scrollListener, 50); //rebinds itself after 50ms
 		        });
 		    };
-		    scrollListener();
 
+		    scrollListener();
+			
 		},
 		
         options: function (key, value) {
@@ -155,14 +185,21 @@
 		
 		// Public methods
 		activate : function() {
-			console.log('activate');
+			this._debug('activate');
   	        this.$element.addClass(this.cssClassActive);              
+  	        
+			this._checkScrollingUpdateRequired();
 		},
 		
 		deactivate : function() {
-			console.log('deactivate');
+			this._debug('deactivate');
   	        this.$element.removeClass(this.cssClassActive);              
 		},
+		
+        destroy: function () {
+        	this.$element.removeClass(this.cssClassActive);
+			this.element._endlesspager = null;            
+        }		
 	}
 	
 	// add the plugin to the jQuery.fn object
@@ -174,16 +211,18 @@
 
         if (options === undefined || typeof options === 'object') {
             return this.each(function () {
-                if (!this._pluginInstance) {
-                    this._pluginInstance = new Endlesspager(this, options);
+                if (!this._endlesspager) {
+                    this._endlesspager = new Endlesspager(this, options);
                 }
             });
         } else if (typeof options === 'string') {
             this.each(function () {
-                var instance = this._pluginInstance;
+                var instance = this._endlesspager;
 
                 if (!instance) {
-                    throw new Error('No Endlesspager applied to this element.');
+                	console.error('No Endlesspager applied to this element.');
+                	return;
+                    //throw new Error('No Endlesspager applied to this element.');
                 }
 
                 if (typeof instance[options] === 'function' && options[0] !== '_') {
