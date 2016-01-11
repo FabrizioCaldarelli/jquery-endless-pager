@@ -18,6 +18,7 @@ It requires few properies:
 * **scrollContainerSelector** : selector of scrolling area container (div, popover, etc..etc..);
 * **extraQueryParameters** : parameters to append to url from next page link;
 * **activateOnStart** : (default: true) set if plugin should be activated at start; 
+* **hidePagination** : (default: true) set if pagination should be hidden;
 
 **nextSelector** and **paginationSelector** are required to work.
 
