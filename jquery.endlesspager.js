@@ -1,8 +1,8 @@
 // --------------------
 // jQuery Endless Pager
 // by Fabrizio Caldarelli
-// version - 1.0.1
-// Last update - 07/01/2015
+// version - 1.0.2
+// Last update - 12/03/2016
 // --------------------
 ;(function($) {
 	'use strict';
@@ -26,7 +26,7 @@
 		},
 
 		// Events
-		onContentReloaded : function(element, href) {
+		onContentReloaded : function(element, href, data) {
 		}
 	}
 
@@ -36,7 +36,7 @@
 		// the plugin's final properties are the merged default and
 		// user-provided options (if any)
 		this.settings = $.extend({}, defaults, options);
-		this.VERSION = '1.0.1';
+		this.VERSION = '1.0.2';
 		this.element = element;
 		this.$element = $(element);
 		this.cssClassActive = 'endlesspager-active';
@@ -109,6 +109,11 @@
 							$(self.settings.paginationSelector).html(paginationContent);
 
 							self._execHidePagination();
+							
+							if(self.settings.onContentReloaded!=null)
+							{
+								self.settings.onContentReloaded($element, href, data);
+							}
 
 							self.settings.updatingInfiniteScroll = false;
 						})
